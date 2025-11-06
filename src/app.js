@@ -8,21 +8,31 @@ const rateLimit = require('express-rate-limit');
 const app = express();
 
 app.use(helmet());
-// Allow multiple frontend origins (5173, 5174, etc.)
+
+// CORS Configuration - Allow multiple origins
 const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:5174',
   'http://localhost:3000',
-  process.env.FRONTEND_URL
-].filter(Boolean);
+  'https://elevare-frontend.vercel.app'
+];
+
+// Add any additional URLs from environment variable
+if (process.env.FRONTEND_URL) {
+  const envUrls = process.env.FRONTEND_URL.split(',').map(url => url.trim());
+  allowedOrigins.push(...envUrls);
+}
 
 app.use(cors({ 
   origin: function(origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl)
+    // Allow requests with no origin (like mobile apps, curl, Postman)
     if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) !== -1 || origin.startsWith('http://localhost:')) {
+    
+    // Check if origin is in allowed list or is localhost
+    if (allowedOrigins.includes(origin) || origin.startsWith('http://localhost:')) {
       callback(null, true);
     } else {
+      console.log('❌ CORS blocked origin:', origin);
       callback(new Error('Not allowed by CORS'));
     }
   },
