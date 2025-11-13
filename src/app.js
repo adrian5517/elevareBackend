@@ -7,6 +7,10 @@ const rateLimit = require('express-rate-limit');
 
 const app = express();
 
+// Enable trust proxy FIRST - Required for rate limiting behind reverse proxies
+// This must be set before any middleware that reads req.ip or X-Forwarded-For
+app.set('trust proxy', 1); // Trust first proxy (Render, Heroku, Railway, etc.)
+
 app.use(helmet());
 
 // CORS Configuration - Allow multiple origins
@@ -41,12 +45,6 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(compression());
-
-// Enable trust proxy for deployment behind reverse proxies (Render, Heroku, etc.)
-// This is required for rate limiting and getting real client IPs
-if (process.env.NODE_ENV === 'production') {
-  app.set('trust proxy', 1); // Trust first proxy
-}
 
 if (process.env.NODE_ENV === 'development') app.use(morgan('dev'));
 
